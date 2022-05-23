@@ -1,55 +1,77 @@
-create table supplier (
-  SUPP_ID int primary key auto_increment, 
+Create database if not exists orders_inventory;
+use orders_inventory;
+
+Drop Table  if exists rating;
+Drop Table  if exists orders;
+Drop Table  if exists supplier_pricing;
+Drop Table  if exists product;
+Drop Table  if exists category;
+Drop Table  if exists customer;
+Drop Table  if exists supplier;
+
+create table if not exists supplier (
+  SUPP_ID int NOT NULL  AUTO_INCREMENT, 
   SUPP_NAME varchar(50) NOT NULL, 
   SUPP_CITY varchar(50) NOT NULL, 
-  SUPP_PHONE varchar(50) NOT NULL
+  SUPP_PHONE varchar(50) NOT NULL,
+  PRIMARY KEY (SUPP_ID)
 );
-create table customer (
-  CUS_ID int primary key auto_increment, 
+
+create table if not exists customer (
+  CUS_ID int NOT NULL  AUTO_INCREMENT,
   CUS_NAME varchar(20) NOT NULL, 
   CUS_PHONE varchar(10) NOT NULL, 
   CUS_CITY varchar(30) NOT NULL, 
-  CUS_GENDER char(1) NOT NULL
+  CUS_GENDER char(1),
+  PRIMARY KEY (CUS_ID)
 );
-create table category (
-  CAT_ID int primary key auto_increment, 
-  CAT_NAME varchar(20) NOT NULL
+create table if not exists category (
+  CAT_ID int NOT NULL  AUTO_INCREMENT,
+  CAT_NAME varchar(20) NOT NULL,
+   PRIMARY KEY (CAT_ID)
 );
-create table product (
-  PRO_ID int primary key auto_increment, 
+
+create table if not exists product (
+  PRO_ID int NOT NULL  AUTO_INCREMENT,
   PRO_NAME varchar(20) NOT NULL DEFAULT 'Dummy', 
   PRO_DESC varchar(60), 
-  CAT_ID int, 
+  CAT_ID int NOT NULL, 
+  PRIMARY KEY (PRO_ID),
   foreign key(CAT_ID) references category(CAT_ID)
 );
-create table supplier_pricing (
-  PRICING_ID int primary key auto_increment, 
-  PRO_ID int, 
-  SUPP_ID int, 
+
+create table if not exists supplier_pricing (
+  PRICING_ID int NOT NULL  AUTO_INCREMENT,
+  PRO_ID int NOT NULL, 
+  SUPP_ID int NOT NULL, 
   SUPP_PRICE int DEFAULT 0, 
+   PRIMARY KEY (PRICING_ID),
   foreign key(PRO_ID) references product(PRO_ID), 
-  foreign key(SUPP_ID) references supplier(SUPP_ID)
-  
-  
-  
+  foreign key(SUPP_ID) references supplier(SUPP_ID) 
 );
-create table orders (
-  ORD_ID int primary key auto_increment, 
+
+create table if not exists orders (
+  ORD_ID int NOT NULL  AUTO_INCREMENT, 
   ORD_AMOUNT int NOT NULL, 
   ORD_DATE date NOT NULL, 
-  CUS_ID int, 
-  PRICING_ID int, 
+  CUS_ID int NOT NULL, 
+  PRICING_ID int NOT NULL, 
+   PRIMARY KEY (ORD_ID),
   foreign key(CUS_ID) references customer(CUS_ID), 
   foreign key(PRICING_ID) references supplier_pricing(PRICING_ID)
 );
-create table rating (
-  RAT_ID int primary key auto_increment, 
+
+ALTER TABLE orders AUTO_INCREMENT=101;
+
+create table if not exists rating (
+  RAT_ID int NOT NULL  AUTO_INCREMENT,
   RAT_RATSTARS int NOT NULL, 
-  ORD_ID int, 
+  ORD_ID int NOT NULL, 
+   PRIMARY KEY (RAT_ID),
   foreign key(ORD_ID) references orders(ORD_ID)
 );
 
-
+/********************Inserting Records in supplier Table ************************************ */
 
 Insert into supplier (SUPP_NAME, SUPP_CITY, SUPP_PHONE) 
 values 
@@ -84,7 +106,7 @@ values
   );
   
   
-****************************************************************************************************
+/********************Inserting Records in customer Table ************************************ */
   
   
   Insert into customer (CUS_NAME, CUS_PHONE, CUS_CITY, CUS_GENDER) 
@@ -120,7 +142,9 @@ values
     'PULKIT', '7895999999', 'DELHI', 'M'
   );
 
-****************************************************************************************************
+  
+/********************Inserting Records in category Table ************************************ */
+  
 
 
 Insert into category (CAT_NAME) 
@@ -159,7 +183,7 @@ values
   
 
 
-****************************************************************************************************
+/********************Inserting Records in product Table ************************************ */
 
 Insert into product (PRO_NAME, PRO_DESC, CAT_ID) 
 values 
@@ -232,7 +256,7 @@ values
     'Train Your Brain ', 'By Shireen Stephen', 1
   );
   
-****************************************************************************************************
+/********************Inserting Records in Supplier_pricing Table ************************************ */
   
   
   Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
@@ -336,7 +360,7 @@ values
   
   
   
-****************************************************************************************************
+/********************Inserting Records in orders Table ************************************ */
   
   Insert into orders (ORD_AMOUNT, ORD_DATE, CUS_ID, PRICING_ID) 
 values 
@@ -442,7 +466,7 @@ values
    99,'2021-09-17',2,14
   );
   
-****************************************************************************************************
+/********************Inserting Records in rating Table ************************************ */
   Insert into rating (ORD_ID, RAT_RATSTARS) 
 values 
   (
@@ -559,13 +583,8 @@ values
   );
   
   
-  
-  
-  
-  
-****************************************************************************************************
-
-3) 
+/********************3) Display the total number of customers based on gender who have placed orders of worth at least Rs.3000 ************************************ */
+ 
 
 select  cus.CUS_GENDER,count(*) as total_no_of_customers from customer as cus
 inner join
@@ -576,10 +595,9 @@ on c.CUS_ID = o.CUS_ID ) as F on F.CUS_ID= cus.CUS_ID group by CUS_GENDER
 ;
 
 
-**************************************************************************************************************
+/********************4) Display all the orders along with product name ordered by a customer having Customer_Id=2************************************ */
 
 
-4) 
 select p.PRO_ID, p.PRO_NAME from product as p
 inner join
 (select sp.PRO_ID  from supplier_pricing as sp
@@ -587,18 +605,19 @@ inner join
 (select ORD_ID, ORD_AMOUNT, ORD_DATE, CUS_ID, PRICING_ID from orders where CUS_ID = 2)
 as O on o.PRICING_ID = sp.PRICING_ID ) as Q on p.PRO_ID=q.PRO_ID;
 
-**************************************************************************************************************
+/********************5) Display the Supplier details who can supply more than one product************************************ */
 
-5)
+
 SELECT sup.SUPP_ID,sup.SUPP_NAME,sup.SUPP_CITY,sup.SUPP_PHONE FROM supplier as sup
 inner join 
 (select SUPP_ID from supplier_pricing group by SUPP_ID having count(*) > 1) as F
 on sup.SUPP_ID=F.SUPP_ID;
 
-**************************************************************************************************************
-6)
+/********************6) Find the least expensive product from each category and print the table with category id, name, product name and price of the product**************** */
 
-CREATE VIEW   product_category_details as (
+DROP VIEW IF EXISTS product_category_details;
+
+CREATE VIEW  product_category_details as (
 
 SELECT pro.PRO_ID,pro.CAT_ID, pro.PRO_NAME, F.SUPP_PRICE FROM product as pro
 inner join
@@ -613,22 +632,23 @@ inner join
 ( select PRO_ID , SUPP_PRICE from  supplier_pricing ) as
 F on F.PRO_ID = pro.PRO_ID  group by pro.CAT_ID) as T on T.CAT_ID = pd.CAT_ID and pd.SUPP_PRICE=T.minprice;
 
-**************************************************************************************************************
+/********************7) Display the Id and Name of the Product ordered after “2021-10-05”.************************************ */
 
-7) Select P.PRO_NAME, P.PRO_ID, T.orderd_date from product p inner join(
+Select P.PRO_NAME, P.PRO_ID, T.orderd_date from product p inner join(
 select sp.PRICING_ID, sp.PRO_ID, O.ORD_DATE as orderd_date from supplier_pricing sp
 inner join (
 SELECT ORD_DATE, PRICING_ID FROM orders where ORD_DATE > '2021-10-05' ) 
 as O where O.PRICING_ID = sp.PRICING_ID) as T on P.PRO_ID=T.PRO_ID;
 
-**************************************************************************************************************
+/********************8) Display customer name and gender whose names start or end with character 'A'.****************** */
 
-8)
+
 SELECT CUS_NAME,CUS_GENDER FROM customer where CUS_NAME like 'A%'or  CUS_NAME like '%A';
 
-**************************************************************************************************************
+/********************9) Create a stored procedure to display supplier id, name, rating and Type_of_Service. For Type_of_Service, If rating =5, print “Excellent 
+Service”,If rating >4 print “Good Service”, If rating >2 print “Average Service” else print “Poor Service”************************************ */
 
-9)
+DROP PROCEDURE if exists orders_inventory.proc; 
 
 DELIMITER  &&
 Create procedure proc()
@@ -654,4 +674,4 @@ DELIMITER ;
 
 call proc();
 
-**************************************************************************************************************
+/***************************************************************************************************************** */
