@@ -1,3 +1,5 @@
+Drop DATABASE if EXISTS orders_inventory;
+
 Create database if not exists orders_inventory;
 use orders_inventory;
 
@@ -139,7 +141,7 @@ values
 Insert into customer (CUS_NAME, CUS_PHONE, CUS_CITY, CUS_GENDER) 
 values 
   (
-    'PULKIT', '7895999999', 'DELHI', 'M'
+    'PULKIT', '7895999999', 'LUCKNOW', 'M'
   );
 
   
@@ -295,22 +297,14 @@ values
      Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   8,1,780
+   12,2,780
   );
   
   
      Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   6,1,789
-  );
-  
-  
-  
-     Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
-values 
-  (
-   7,2,31000
+   12,4,789
   );
   
   
@@ -318,28 +312,28 @@ values
      Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   9,2,1450
+   3,1,31000
+  );
+  
+  
+  
+     Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
+values 
+  (
+   1,5,1450
   );
   
    
      Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   10,3,4000
+   4,2,999
   );
   
    Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   11,3,1000
-  );
-  
-  
-  
-   Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
-values 
-  (
-   12,4,4000
+   7,3,549
   );
   
   
@@ -347,14 +341,37 @@ values
    Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   1,3,1500
+   7,4,529
+  );
+  
+  
+  
+   Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
+values 
+  (
+   6,2,105
   );
   
   
    Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
 values 
   (
-   6,4,99
+   6,1,99
+  );
+  
+  
+   Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
+values 
+  (
+   2,5,2999
+  );
+  
+  
+  
+   Insert into Supplier_pricing (PRO_ID, SUPP_ID, SUPP_PRICE) 
+values 
+  (
+   5,2,2999
   );
   
   
@@ -586,32 +603,32 @@ values
 /********************3) Display the total number of customers based on gender who have placed orders of worth at least Rs.3000 ************************************ */
  
 
-select  cus.CUS_GENDER,count(*) as total_no_of_customers from customer as cus
+select  cus.CUS_GENDER as Gender,
+count(*) as No_of_customers from customer as cus
 inner join
 (select  distinct c.CUS_ID, c.CUS_GENDER from customer as c 
 inner join
 (select CUS_ID from orders where ORD_AMOUNT >= 3000) as O
-on c.CUS_ID = o.CUS_ID ) as F on F.CUS_ID= cus.CUS_ID group by CUS_GENDER
-;
+on c.CUS_ID = o.CUS_ID ) as F on F.CUS_ID= cus.CUS_ID group by Gender;
 
 
 /********************4) Display all the orders along with product name ordered by a customer having Customer_Id=2************************************ */
 
 
-select p.PRO_ID, p.PRO_NAME from product as p
+select p.PRO_NAME,Q.ORD_ID, Q.ORD_AMOUNT, Q.ORD_DATE, Q.CUS_ID, Q.PRICING_ID from product as p
 inner join
-(select sp.PRO_ID  from supplier_pricing as sp
+(select sp.PRO_ID , O.ORD_ID, O.ORD_AMOUNT, O.ORD_DATE, O.CUS_ID, O.PRICING_ID from supplier_pricing as sp
 inner join 
 (select ORD_ID, ORD_AMOUNT, ORD_DATE, CUS_ID, PRICING_ID from orders where CUS_ID = 2)
-as O on o.PRICING_ID = sp.PRICING_ID ) as Q on p.PRO_ID=q.PRO_ID;
+as O on O.PRICING_ID = sp.PRICING_ID ) as Q on p.PRO_ID = q.PRO_ID;
 
 /********************5) Display the Supplier details who can supply more than one product************************************ */
 
 
-SELECT sup.SUPP_ID,sup.SUPP_NAME,sup.SUPP_CITY,sup.SUPP_PHONE FROM supplier as sup
+SELECT sup.SUPP_ID,sup.SUPP_NAME,sup.SUPP_CITY,sup.SUPP_PHONE, F.No_of_supplied_products FROM supplier as sup
 inner join 
-(select SUPP_ID from supplier_pricing group by SUPP_ID having count(*) > 1) as F
-on sup.SUPP_ID=F.SUPP_ID;
+(select SUPP_ID , count(*) as No_of_supplied_products from supplier_pricing group by SUPP_ID having count(*) > 1) as F
+on sup.SUPP_ID = F.SUPP_ID;
 
 /********************6) Find the least expensive product from each category and print the table with category id, name, product name and price of the product**************** */
 
@@ -619,18 +636,21 @@ DROP VIEW IF EXISTS product_category_details;
 
 CREATE VIEW  product_category_details as (
 
-SELECT pro.PRO_ID,pro.CAT_ID, pro.PRO_NAME, F.SUPP_PRICE FROM product as pro
+ select sp.PRO_ID , sp.SUPP_PRICE, sp.SUPP_ID,F.PRO_NAME ,F.CAT_NAME,F.CAT_ID from  supplier_pricing sp
 inner join
-( select PRO_ID , SUPP_PRICE from  supplier_pricing ) as
-F on F.PRO_ID = pro.PRO_ID) ;
+(SELECT pro.PRO_ID,pro.CAT_ID, pro.PRO_NAME,c.CAT_NAME FROM product as pro
+inner join
+(select CAT_ID , CAT_NAME from  category) as c on c.CAT_ID = pro.CAT_ID) as F on F.PRO_ID = sp.PRO_ID
+) ;
 
 
-select pd.PRO_ID, pd.CAT_ID, pd.PRO_NAME, pd.SUPP_PRICE from product_category_details as pd 
+select  pd.CAT_ID, pd.CAT_NAME, pd.SUPP_PRICE as Minprice,
+ pd.PRO_ID,pd.PRO_NAME from product_category_details as pd 
 inner join (
 SELECT pro.CAT_ID,min( SUPP_PRICE) as minprice FROM product as pro
 inner join
 ( select PRO_ID , SUPP_PRICE from  supplier_pricing ) as
-F on F.PRO_ID = pro.PRO_ID  group by pro.CAT_ID) as T on T.CAT_ID = pd.CAT_ID and pd.SUPP_PRICE=T.minprice;
+F on F.PRO_ID = pro.PRO_ID  group by pro.CAT_ID) as T on T.CAT_ID = pd.CAT_ID and pd.SUPP_PRICE = T.minprice;
 
 /********************7) Display the Id and Name of the Product ordered after “2021-10-05”.************************************ */
 
@@ -638,7 +658,7 @@ Select P.PRO_NAME, P.PRO_ID, T.orderd_date from product p inner join(
 select sp.PRICING_ID, sp.PRO_ID, O.ORD_DATE as orderd_date from supplier_pricing sp
 inner join (
 SELECT ORD_DATE, PRICING_ID FROM orders where ORD_DATE > '2021-10-05' ) 
-as O where O.PRICING_ID = sp.PRICING_ID) as T on P.PRO_ID=T.PRO_ID;
+as O where O.PRICING_ID = sp.PRICING_ID) as T on P.PRO_ID = T.PRO_ID;
 
 /********************8) Display customer name and gender whose names start or end with character 'A'.****************** */
 
